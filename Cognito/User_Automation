@@ -1,0 +1,86 @@
+import boto3
+
+
+#Creating a boto3 client object for cognito
+client = boto3.client('cognito-idp')
+
+#Creating a boto3 ssm object for ssm
+ssm = boto3.client('ssm')
+
+#Creating a boto3 secrets manager for secrets manager
+secrets = boto3.client('secretsmanager')
+
+
+#Group Type
+type = 'admin'
+
+
+def get_random_password_string(length):
+    if length >= 6:
+        response = secrets.get_random_password(
+            PasswordLength=length,
+            ExcludeNumbers=False,
+            ExcludePunctuation=False,
+            ExcludeUppercase=False,
+            ExcludeLowercase=False,
+            RequireEachIncludedType=True
+        )
+        return response['RandomPassword']
+    else:
+        print("Length < 6 | Can not create a user")
+
+
+def ssm_parameters(name):
+    try:
+        response = ssm.get_parameter(
+            Name=name,
+            WithDecryption=True
+        )
+        return response['Parameter']['Value']
+    except:
+        print("An exception occurred")
+
+
+def user_creation(user_pool_id, email, password):
+    try:
+        response = client.admin_create_user(
+            UserPoolId=user_pool_id,
+            Username=email,
+            UserAttributes=[
+                {
+                    'Name': 'email',
+                    'Value': email
+                }
+            ],
+            TemporaryPassword=password,
+            ForceAliasCreation=True,
+            MessageAction='SUPPRESS',
+            DesiredDeliveryMediums=[
+                'EMAIL'
+            ]
+        )
+        return response
+    except:
+        print("An exception occurred | Unable to create a user")
+
+
+def add_user_group(user_pool_id, email, type):
+    try:
+        response = client.admin_add_user_to_group(
+            UserPoolId=user_pool_id,
+            Username=email,
+            GroupName=type
+        )
+    except:
+        print("An exception occurred | Unable to add user to a group")
+
+
+if __name__ == '__main__':
+    email = ssm_parameters('Email')
+    password = ssm_parameters('Password')
+    user_pool_id = ssm_parameters('UserPool')
+    user_object = user_creation(user_pool_id, email, password)
+    if user_object != '':
+        add_user_group(user_pool_id, email, type)
+    else:
+        print("Unable to add user to the group")
