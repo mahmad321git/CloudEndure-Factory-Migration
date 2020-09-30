@@ -1,0 +1,26 @@
+[
+{
+ "Value" : "aws.nbs95@nbaysolutions.net",
+ "Key" : "SSOUserEmail"
+},
+{
+ "Value" : "Zubair",
+ "Key" : "SSOUserFirstName"
+},
+{
+ "Value" : "Sajid",
+ "Key" : "SSOUserLastName"
+},
+{
+ "Value" : "Custom",
+ "Key" : "ManagedOrganizationalUnit"
+},
+{
+ "Value" : "MigrationAccount",
+ "Key" : "AccountName"
+},
+{
+ "Value" : "aws.nbs95@nbaysolutions.net",
+ "Key" : "AccountEmail"
+}
+]

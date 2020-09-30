@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This Stack creates VPC and some other networking resources.
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  VpcName:
+    Type: String
+    Description: Vpc name
+  VpcSSMName:
+    Type: String
+    Description: Vpc ssm name
+  VpcCidrBlock:
+    Type: String
+    Description: "CidrBlock for VPC."
+     
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      InstanceTenancy: default
+      Tags:
+       - Key: Name
+         Value: !Sub ${Project}-${Environment}-${VpcName}-vpc
+
+  VPCSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/network/${VpcSSMName}_vpc_id
+      Type: "String"
+      Value: !Ref Vpc

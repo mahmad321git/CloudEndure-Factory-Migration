@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Subnet Route Association
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  Counter:
+    Type: String
+    Description: Counter number
+  SubnetType:
+    Type: String
+    Description: Subnet type either public or private
+     
+Resources:
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${SubnetType}_subnet_${Counter}:1}}"
+      RouteTableId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${SubnetType}_routetable:1}}"

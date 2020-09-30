@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This Stack creates public and private subnets
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  VpcName:
+    Type: String
+    Description: Vpc name
+  CidrBlock:
+    Type: String
+    Description: CIDR range for subnet
+  AZNo:
+    Type: String
+    Description: Availability zone number
+  SubnetType:
+    Type: String
+    Description: Subnet type either public or private
+  Counter:
+    Type: String
+    Description: Counter number
+
+Conditions:
+  IsPublicSubnet: !Equals [ "public", !Ref SubnetType]
+
+Resources:
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      CidrBlock: !Ref CidrBlock
+      AvailabilityZone: !Select
+        - !Ref AZNo
+        - Fn::GetAZs: !Ref 'AWS::Region'
+      MapPublicIpOnLaunch: !If [IsPublicSubnet, true, !Ref "AWS::NoValue"]
+      Tags:
+       - Key: Name
+         Value: !Sub ${Project}-${Environment}-${SubnetType}-subnet-${Counter}
+
+  SubnetSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/network/${SubnetType}_subnet_${Counter}
+      Type: "String"
+      Value: !Ref Subnet

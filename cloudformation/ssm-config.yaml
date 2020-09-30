@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create SSM parameters for CMAF configurations
+
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    Default: cmaf
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    Default: dev
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  CognitoUserEmail:
+    Type: String
+    Description: Cognito User email address
+  CloudEndureUsername:
+    Type: String
+    Description: Specify CloudEndure account username
+  CloudEndureURL:
+    Type: String
+    Description: Specify CloudEndure account url
+
+Resources:
+
+  FactoryUsernameSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/factory/username
+      Type: "String"
+      Value: !Ref CognitoUserEmail
+  
+  LinuxUsernameSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/linux/username
+      Type: "String"
+      Value: ValueToBeAdded
+  
+  WindowsUsernameSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/windows/username
+      Type: "String"
+      Value: ValueToBeAdded
+  
+  CLoudEndureAccountUsernameSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/cloudendure/user_name
+      Type: "String"
+      Value: !Ref CloudEndureUsername
+
+  CloudEndureURLSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/cloudendure/url
+      Type: "String"
+      Value: !Ref CloudEndureURL
