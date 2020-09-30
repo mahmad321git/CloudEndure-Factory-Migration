@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create SSM resources and Migration Factory Solution
+
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  CidrIp:
+    Type: String
+    Description: CIDR range for security group
+  SourceGroupId:
+    Type: String
+    Description: Source security group
+  FromPort:
+    Type: String
+    Description: Security group from port
+  ToPort:
+    Type: String
+    Description: Security group to port
+  SGName:
+    Type: String
+    Description: Security group name
+
+Conditions:
+  IsCidrIpProvided: !Not [ !Equals [ "", !Ref CidrIp]]
+
+Resources:
+  SecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      IpProtocol: 'tcp'
+      FromPort: !Ref FromPort
+      ToPort: !Ref ToPort
+      CidrIp: !If [IsCidrIpProvided, !Ref CidrIp, !Ref "AWS::NoValue"]
+      GroupId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${SGName}_sg:1}}"
+      SourceSecurityGroupId: !If [IsCidrIpProvided, !Ref "AWS::NoValue", !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${SourceGroupId}_sg:1}}"]

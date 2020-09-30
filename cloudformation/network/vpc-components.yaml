@@ -1,0 +1,91 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: This stack create some other networking resources.
+Parameters:
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  VpcName:
+    Type: String
+    Description: Vpc name
+
+Resources:
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+       - Key: Name
+         Value: !Sub $${Project}-${Environment}-InternetGateway
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      InternetGatewayId: !Ref InternetGateway
+      
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      Tags:
+       - Key: Name
+         Value: !Sub ${Project}-${Environment}-public-rt
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Eip: 
+    Type: AWS::EC2::EIP
+    DependsOn: PublicRoute
+    Properties:
+      Domain: vpc  
+  
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt Eip.AllocationId
+      SubnetId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/public_subnet_1:1}}"
+      Tags:
+       - Key: Name
+         Value: !Sub ${Project}-${Environment}-NatGateway
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      Tags:
+       - Key: Name
+         Value: !Sub ${Project}-${Environment}-private-rt
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PublicRouteTableSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/network/public_routetable
+      Type: "String"
+      Value: !Ref PublicRouteTable
+
+  PrivateRouteTableSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/network/private_routetable
+      Type: "String"
+      Value: !Ref PrivateRouteTable

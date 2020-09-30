@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create SSM resources and Migration Factory Solution
+
+Parameters:
+
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  CognitoUserEmail:
+    Type: String
+    Description: Cognito User email address
+  CloudEndureUsername:
+    Type: String
+    Description: Specify CloudEndure account username
+  CloudEndureURL:
+    Type: String
+    Description: Specify CloudEndure account url
+  VpcName:
+    Type: String
+    Description: Vpc name
+
+Resources:
+
+  MigrationFactorySecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Migration Factory Security Group
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-migration-factory-sg'
+  MigrationFactorySecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties: 
+      Description: Access to source security group
+      IpProtocol: -1
+      GroupId: !Ref MigrationFactorySecurityGroup
+      SourceSecurityGroupId: !Ref MigrationFactorySecurityGroup
+
+  SSMConfig:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        Project: !Ref Project
+        Environment: !Ref Environment
+        CognitoUserEmail : !Ref CognitoUserEmail
+        CloudEndureUsername : !Ref CloudEndureUsername
+        CloudEndureURL : !Ref CloudEndureURL
+      TemplateURL: ./ssm-config.yaml
+
+  MigrationFactory:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      Parameters:
+        Application: !Ref Project
+        Environment: !Ref Environment
+        Version: "1.3"
+        SecurityGroup: !Ref MigrationFactorySecurityGroup
+        SubnetId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/public_subnet_1:1}}"
+      TemplateURL: ./aws-cloudendure-migration-factory-solution.yaml

@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create SSM resources and Migration Factory Solution
+
+Parameters:
+
+  Project:
+    Type: String
+    Description: Name of the Project.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Project parameter must be all lower case characters
+  Environment:
+    Type: String
+    Description: Name of the environment.
+    AllowedPattern: "[-a-z0-9]*"
+    ConstraintDescription: Environment parameter must be all lower case characters
+  SGName:
+    Type: String
+    Description: Name of security group
+  SGNameSSM:
+    Type: String
+    Description: Name of SSM security group
+  SGDescription:
+    Type: String
+    Description: Description of security group
+  VpcName:
+    Type: String
+    Description: Description of security group
+
+Resources:
+  SecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: !Ref SGDescription
+      VpcId: !Sub "{{resolve:ssm:/${Project}/${Environment}/network/${VpcName}_vpc_id:1}}"
+      Tags:
+        - Key: Name
+          Value: !Sub '${Project}-${Environment}-${SGName}-sg'
+  
+  SGSSM:
+    Type: "AWS::SSM::Parameter"
+    Properties:
+      Name: !Sub /${Project}/${Environment}/network/${SGNameSSM}_sg
+      Type: "String"
+      Value: !Ref SecurityGroup
