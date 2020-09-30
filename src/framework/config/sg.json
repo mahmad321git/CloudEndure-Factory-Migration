@@ -1,0 +1,18 @@
+{
+    "DocType": "SecurityGroups",
+    "Name": "SG_CONFIG",
+    "SecurityGroups": [
+        {
+            "name": "replication-server",
+            "description": "replication server sg",
+            "ports": [
+                "22",
+                "3389"
+            ],
+            "cidr": "0.0.0.0/0",
+            "source_sg_name": "",
+            "vpc_name": "disaster-recovery",
+            "profile": "disaster_recovery"
+        }
+    ]
+}
